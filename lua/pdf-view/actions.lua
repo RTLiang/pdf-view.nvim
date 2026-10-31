@@ -554,6 +554,24 @@ local function set_keymaps(s)
   end
 end
 
+--- Change zoom relative to the current fit mode, or reset to a whole-page fit.
+---@param value number|"+"|"-"|"reset" percentage, or a relative step
+function M.zoom(s, value)
+  if value == "+" then
+    set_zoom(s, s.zoom * config.options.zoom_step)
+  elseif value == "-" then
+    set_zoom(s, s.zoom / config.options.zoom_step)
+  elseif value == "reset" then
+    set_mode(s, "page")
+  else
+    local percent = tonumber(value)
+    if not percent or percent ~= percent or percent == math.huge or percent < 100 then
+      error("pdf-view: zoom must be a percentage >= 100, +, -, or reset", 0)
+    end
+    set_zoom(s, percent / 100)
+  end
+end
+
 M.scroll = move
 M.rescan = rescan
 M.set_keymaps = set_keymaps

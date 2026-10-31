@@ -86,4 +86,57 @@ describe("PDF mouse wheel", function()
     vim.api.nvim_buf_delete(buf, { force = true })
     terminal.ui_attached, kitty.write = old_ui, old_write
   end)
+
+  it("zooms a PDF from the source split using a command and Ctrl-wheel", function()
+    local old_ui, old_write = terminal.ui_attached, kitty.write
+    terminal.ui_attached = function()
+      return true
+    end
+    kitty.write = function() end
+    require("pdf-view").setup({ force = true, cell_size = { 10, 20 }, live_reload = false })
+    require("pdf-view")._init()
+    vim.cmd("silent! only")
+    vim.cmd.enew()
+    local source_win = vim.api.nvim_get_current_win()
+    vim.cmd("botright vsplit")
+    local buf = viewer.open(path)
+    local s = viewer.sessions[buf]
+    wait(function()
+      return s.display ~= nil and s.job == nil
+    end, "first render")
+    local pdf_win = vim.api.nvim_get_current_win()
+    vim.api.nvim_set_current_win(source_win)
+    vim.cmd("PdfZoom 150")
+    wait(function()
+      return s.zoom == 1.5 and s.job == nil
+    end, "command zoom from source")
+    eq(source_win, vim.api.nvim_get_current_win())
+    vim.cmd("redraw")
+    local origin = vim.fn.win_screenpos(pdf_win)
+    vim.api.nvim_input_mouse("move", "", "", 0, origin[1] + 2, origin[2] + 2)
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-ScrollWheelUp>", true, false, true), "mx", false)
+    wait(function()
+      return s.zoom == 1.875 and s.job == nil
+    end, "Ctrl-wheel zoom in")
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-ScrollWheelDown>", true, false, true), "mx", false)
+    wait(function()
+      return s.zoom == 1.5 and s.job == nil
+    end, "Ctrl-wheel zoom out")
+    eq(source_win, vim.api.nvim_get_current_win())
+    vim.cmd("PdfZoom reset")
+    wait(function()
+      return s.zoom == 1 and s.job == nil
+    end, "zoom reset")
+    -- The original +/= shortcuts still work when the PDF itself is focused.
+    vim.api.nvim_set_current_win(pdf_win)
+    vim.api.nvim_feedkeys("+", "mx", false)
+    wait(function()
+      return s.zoom == 1.25 and s.job == nil
+    end, "PDF keyboard zoom")
+    local ok = pcall(require("pdf-view").zoom, 0)
+    eq(false, ok, "reject invalid percentages")
+    eq(1.25, s.zoom)
+    vim.api.nvim_buf_delete(buf, { force = true })
+    terminal.ui_attached, kitty.write = old_ui, old_write
+  end)
 end)

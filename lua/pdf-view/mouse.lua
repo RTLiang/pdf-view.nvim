@@ -31,17 +31,34 @@ function M.scroll(direction)
   end)
 end
 
+function M.zoom(direction)
+  local s, win = target()
+  if not s then
+    return
+  end
+  vim.api.nvim_win_call(win, function()
+    require("pdf-view.actions").zoom(s, direction)
+  end)
+end
+
 function M.setup()
   if installed then
     return
   end
   installed = true
+  local bindings = {
+    { key = "<C-ScrollWheelUp>", action = "zoom", arg = "+" },
+    { key = "<C-ScrollWheelDown>", action = "zoom", arg = "-" },
+  }
   for direction in pairs(directions) do
-    local key = "<" .. direction .. ">"
+    bindings[#bindings + 1] = { key = "<" .. direction .. ">", action = "scroll", arg = direction }
+  end
+  for _, binding in ipairs(bindings) do
+    local key = binding.key
     local fallback = key
     for _, map in ipairs(vim.api.nvim_get_keymap("n")) do
       if map.lhs == key then
-        fallback = "<Plug>(PdfViewFallback" .. direction .. ")"
+        fallback = "<Plug>(PdfViewFallback" .. key:sub(2, -2) .. ")"
         vim.keymap.set("n", fallback, map.callback or map.rhs, {
           expr = map.expr == 1,
           remap = map.noremap == 0,
@@ -54,10 +71,10 @@ function M.setup()
     end
     vim.keymap.set("n", key, function()
       if require("pdf-view.config").options.mouse_wheel and target() then
-        return "<Cmd>lua require('pdf-view.mouse').scroll('" .. direction .. "')<CR>"
+        return ("<Cmd>lua require('pdf-view.mouse').%s('%s')<CR>"):format(binding.action, binding.arg)
       end
       return fallback
-    end, { expr = true, silent = true, desc = "PDF: scroll the viewer under the pointer" })
+    end, { expr = true, silent = true, desc = "PDF: " .. binding.action .. " the viewer under the pointer" })
   end
 end
 

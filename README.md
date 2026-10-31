@@ -205,11 +205,26 @@ source split has keyboard focus. Vertical/horizontal wheel events pan a zoomed
 page and turn pages when that direction reaches an edge. At whole-page fit they
 turn pages directly. Press `w` for a width-fitted reading view.
 
+Hold **Ctrl** while scrolling vertically over the PDF to zoom in/out without
+moving keyboard focus. Ctrl + wheel up enlarges; Ctrl + wheel down reduces.
+Terminals must forward the modified wheel event. Trackpad pinch gestures are
+usually handled by the terminal itself (often as font zoom) and are not PDF
+zoom events.
+
 These normal-mode handlers preserve existing global wheel mappings or native
 scrolling outside PDF windows. Set `mouse_wheel = false` to disable PDF wheel
 routing. The terminal must forward mouse events to Neovim.
 
 ### Zoom
+
+Keyboard `+`/`=` and `-` act when the PDF buffer has focus. From the source split
+or file tree, use `:PdfZoom 150` (150%), `:PdfZoom +`, `:PdfZoom -`, or
+`:PdfZoom reset`. With no argument, `:PdfZoom` enlarges one step. Commands target
+the current PDF or the sole visible PDF in the tab and preserve keyboard focus.
+If several PDF previews are visible, focus the intended one first.
+
+For Lua mappings, `require("pdf-view").zoom(150)` selects the same target;
+`require("pdf-view").zoom("+", buf)` targets an explicit viewer buffer.
 
 Zoom 1 is the whole page fitted to the window; `+` makes it 25% larger per step, up to 8×. Zooming keeps whatever
 is in the middle of the window in the middle. Once the page is larger than the window, a movement key scrolls it if it

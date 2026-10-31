@@ -61,8 +61,48 @@ function M.inverse(mouse)
   return require("pdf-view.synctex").inverse(mouse)
 end
 
+--- Zoom the current PDF, or the sole visible PDF in this tab, without changing source focus.
+---@param value number|"+"|"-"|"reset" percentage or relative step
+---@param buf? integer explicit viewer buffer
+function M.zoom(value, buf)
+  local sessions = require("pdf-view.session").sessions
+  local s = sessions[buf or vim.api.nvim_get_current_buf()]
+  if not s and not buf then
+    local seen = {}
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      local candidate = sessions[vim.api.nvim_win_get_buf(win)]
+      if candidate then
+        seen[candidate.buf] = candidate
+      end
+    end
+    local candidates = vim.tbl_values(seen)
+    if #candidates == 1 then
+      s = candidates[1]
+    end
+    if #candidates > 1 then
+      error("pdf-view: focus the PDF to zoom; multiple previews are visible", 0)
+    end
+  end
+  if not s then
+    error("pdf-view: open a PDF preview with :VimtexView or :PdfView first", 0)
+  end
+  require("pdf-view.actions").zoom(s, value)
+end
+
 --- Called by plugin/pdf-view.lua: register the command and the default handler.
 function M._init()
+  vim.api.nvim_create_user_command("PdfZoom", function(args)
+    local ok, err = pcall(M.zoom, args.args ~= "" and args.args or "+")
+    if not ok then
+      vim.notify(tostring(err), vim.log.levels.WARN)
+    end
+  end, {
+    nargs = "?",
+    desc = "Zoom a PDF (percentage, +, -, reset)",
+    complete = function()
+      return { "+", "-", "100", "125", "150", "200", "reset" }
+    end,
+  })
   vim.api.nvim_create_user_command("PdfForward", function(args)
     M.forward({ pdf = args.args ~= "" and args.args or nil })
   end, { nargs = "?", complete = "file", desc = "SyncTeX: locate source in a PDF split" })
