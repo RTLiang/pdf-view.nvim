@@ -77,11 +77,15 @@ local function present(s, win, png, info, fit, rows)
 
   s.slot, s.page, s.count, s.target = slot, info.page, info.count, nil
   s.geom = { w = info.width, h = info.height }
+  s.display = { page = info.page, fit = fit, geom = s.geom }
   if fit.cx then
     s.cx, s.cy = fit.cx, fit.cy -- what was reachable, after clamping to the page
   end
   update_winbar(s, win)
   pcall(vim.api.nvim_win_set_cursor, win, { 1, 0 })
+  if s.sync_hit then
+    require("pdf-view.synctex").mark(s)
+  end
 end
 
 ---@param s PdfView.Session
@@ -169,6 +173,11 @@ local function show(s, page, opts)
       return fail(err or "mutool returned no page information")
     end
     remember_info(s, stamp, info)
+    if s.sync_pending and s.sync_pending.page == info.page then
+      s.cx = math.max(0, math.min(1, s.sync_pending.x / info.width))
+      s.cy = math.max(0, math.min(1, s.sync_pending.y / info.height))
+      s.sync_pending = nil
+    end
 
     local highlights, highlights_key = nil, ""
     if s.search then

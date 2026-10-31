@@ -66,6 +66,12 @@ local NO_HIGHLIGHT = "PdfViewNone"
 ---@field grid? PdfView.Placeholders
 ---@field watcher? PdfView.Watcher
 ---@field waiting_for_ui? boolean the first render is waiting for a UI to attach
+---@field sync_hit? {page: integer, x: number, y: number} latest forward-search target in PDF points
+---@field sync_pending? {page: integer, x: number, y: number} target awaiting page geometry
+---@field display? {page: integer, fit: PdfView.Fit|PdfView.Viewport, geom: {w: number, h: number}} last presented image
+---@field source_win? integer source window to return to on inverse search
+---@field sync_root? string TeX build cwd (relative SyncTeX inputs are resolved here)
+---@field inverse_request? integer latest inverse-query generation
 ---@field closed boolean
 
 ---@type table<integer, PdfView.Session>

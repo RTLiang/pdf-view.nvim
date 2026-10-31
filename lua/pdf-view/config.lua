@@ -22,6 +22,7 @@ local M = {}
 ---@field outline string[] pick a bookmark to jump to
 ---@field reload string[] re-render the current page
 ---@field close string[] close the viewer buffer
+---@field inverse_search string[] SyncTeX reverse search at the mouse
 ---@field help string[] show the key summary
 
 ---@class PdfView.Config
@@ -84,6 +85,7 @@ local defaults = {
     outline = { "gO" },
     reload = { "r" },
     close = { "q" },
+    inverse_search = { "<C-LeftMouse>" },
     help = { "g?" },
   },
 }

@@ -51,8 +51,24 @@ function M.status(buf)
   return viewer and viewer.status(buf) or ""
 end
 
+--- SyncTeX forward search from the current source into a PDF split.
+function M.forward(opts)
+  return require("pdf-view.synctex").forward(opts)
+end
+
+--- SyncTeX reverse search at a mouse position (defaults to getmousepos()).
+function M.inverse(mouse)
+  return require("pdf-view.synctex").inverse(mouse)
+end
+
 --- Called by plugin/pdf-view.lua: register the command and the default handler.
 function M._init()
+  vim.api.nvim_create_user_command("PdfForward", function(args)
+    M.forward({ pdf = args.args ~= "" and args.args or nil })
+  end, { nargs = "?", complete = "file", desc = "SyncTeX: locate source in a PDF split" })
+  vim.api.nvim_create_user_command("PdfInverse", function()
+    M.inverse()
+  end, { desc = "SyncTeX: locate PDF mouse position in source" })
   vim.api.nvim_create_user_command("PdfView", function(args)
     local path = args.fargs[1]
     if not path then

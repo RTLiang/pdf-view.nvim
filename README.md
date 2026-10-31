@@ -32,6 +32,76 @@ LaTeX or Typst build, say — the page refreshes by itself.
 
 </div>
 
+## SyncTeX / VimTeX (this fork)
+
+This fork adds source ↔ PDF navigation inside Neovim. It requires the `synctex`
+executable from a TeX distribution and a PDF compiled with `-synctex=1` (VimTeX's
+latexmk backend enables this by default). Rendering still requires Kitty or
+Ghostty and MuPDF as described below.
+
+```lua
+{
+  "RTLiang/pdf-view.nvim",
+  branch = "feat/synctex",
+  lazy = false,
+  opts = {},
+},
+{
+  "lervag/vimtex",
+  lazy = false,
+  init = function()
+    vim.g.vimtex_view_method = "pdf_view"
+  end,
+},
+```
+
+Keep `pdf` out of Snacks' image formats using the configuration below.
+
+- In a TeX buffer, `:VimtexView` or `<localleader>lv` opens/reuses a PDF split,
+  locates the source position, and marks it with an orange arrow. Source focus
+  is preserved. The bundled VimTeX adapter obtains the output PDF from VimTeX,
+  including projects with included source files and custom output directories.
+- In the PDF, **Ctrl + left click** jumps back to the corresponding source line.
+  This is buffer-local and can be remapped through `keymaps.inverse_search`.
+  Enable Neovim's mouse input (`vim.opt.mouse = "a"`) and ensure your terminal
+  sends Ctrl-click to Neovim.
+- Without VimTeX, run `:PdfForward /path/to/main.pdf` from the source buffer.
+  If omitted, the PDF defaults to the source file's basename. For projects built
+  from a different working directory, use the Lua API with `root` set explicitly.
+- Existing PDF file watching refreshes the image after compilation. The marker
+  records the last explicit lookup; run forward search again after source edits
+  to obtain fresh SyncTeX coordinates.
+
+```lua
+require("pdf-view").forward({
+  pdf = "/project/build/main.pdf",
+  root = "/project", -- TeX compilation cwd; resolves relative SyncTeX input paths
+  -- source, line, column default to the current buffer and cursor
+})
+require("pdf-view").inverse() -- uses vim.fn.getmousepos()
+```
+
+SyncTeX is approximate: mouse precision is one terminal cell and the source
+column is only used when reported by SyncTeX. This implementation targets
+unmodified LaTeX output pages. PDF pages subsequently rotated, cropped, scaled,
+reordered or otherwise edited are not supported for synchronization; recompile
+the original PDF instead. Compile errors or missing/stale SyncTeX data can prevent
+matching; the viewer reports the query failure rather than guessing a page.
+
+`tests/synctex_spec.lua` covers result parsing and coordinate transforms. When
+`pdflatex`, `synctex` and `mutool` are present, it also compiles a two-page document
+in a directory containing spaces and Chinese characters with a separate build
+directory, then exercises forward search, markers, zooming and reverse search.
+The automated viewer tests stub image transport; terminal appearance and physical
+Ctrl-click still require a visual check in Kitty/Ghostty.
+
+The optional VimTeX adapter smoke test also checks a real latexmk build with an
+included source file and `build/` output directory:
+
+```sh
+VIMTEX_DIR=/path/to/vimtex nvim --headless -u NONE -i NONE -l tests/vimtex_integration.lua
+```
+
 ## Requirements
 
 - Neovim 0.11 or newer, with `termguicolors` (the image id travels in a 24-bit foreground colour).
@@ -206,6 +276,7 @@ require("pdf-view").setup({
     outline = { "gO" },
     reload = { "r" },
     close = { "q" },
+    inverse_search = { "<C-LeftMouse>" }, -- SyncTeX: PDF position -> source
     help = { "g?" },
   },
 })

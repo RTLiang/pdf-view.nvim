@@ -373,6 +373,7 @@ local ACTION_ORDER = {
   "outline",
   "reload",
   "close",
+  "inverse_search",
   "help",
 }
 
@@ -514,6 +515,13 @@ ACTIONS.close = {
   desc = "close the viewer",
   run = function(s)
     vim.api.nvim_buf_delete(s.buf, { force = true })
+  end,
+}
+
+ACTIONS.inverse_search = {
+  desc = "SyncTeX: jump to source at the mouse",
+  run = function()
+    require("pdf-view.synctex").inverse()
   end,
 }
 
