@@ -554,6 +554,7 @@ local function set_keymaps(s)
   end
 end
 
+M.scroll = move
 M.rescan = rescan
 M.set_keymaps = set_keymaps
 

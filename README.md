@@ -197,6 +197,18 @@ All are buffer-local and normal mode. The keys that move, zoom or step between m
 > [!NOTE]
 > `<Space>` is deliberately unbound so `<leader>` mappings keep working.
 
+### Trackpad and mouse wheel
+
+With mouse input enabled (`vim.opt.mouse = "a"`), two-finger trackpad scrolling
+and mouse-wheel events navigate the PDF under the pointer, including while the
+source split has keyboard focus. Vertical/horizontal wheel events pan a zoomed
+page and turn pages when that direction reaches an edge. At whole-page fit they
+turn pages directly. Press `w` for a width-fitted reading view.
+
+These normal-mode handlers preserve existing global wheel mappings or native
+scrolling outside PDF windows. Set `mouse_wheel = false` to disable PDF wheel
+routing. The terminal must forward mouse events to Neovim.
+
 ### Zoom
 
 Zoom 1 is the whole page fitted to the window; `+` makes it 25% larger per step, up to 8×. Zooming keeps whatever
@@ -239,6 +251,7 @@ use one) and jumps to the chosen page. Documents without bookmarks say so.
 ```lua
 require("pdf-view").setup({
   auto_open = true,        -- take over *.pdf buffers (:edit, nvim file.pdf, ...)
+  mouse_wheel = true,      -- navigate the PDF under the pointer, keeping source focus
   live_reload = true,      -- re-render when the file changes on disk
   reload_delay = 200,      -- ms the file must stay quiet before reloading
   winbar = true,           -- "<file>   <page> / <pages>" in the window's winbar

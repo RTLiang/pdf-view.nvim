@@ -27,6 +27,7 @@ local M = {}
 
 ---@class PdfView.Config
 ---@field auto_open boolean open `*.pdf` buffers (`:edit`, `nvim file.pdf`, ...) in the viewer
+---@field mouse_wheel boolean route wheel/trackpad events over a PDF to its navigation, preserving focus
 ---@field live_reload boolean re-render when the PDF changes on disk
 ---@field reload_delay integer ms to wait after the last file event before reloading
 ---@field winbar boolean show "<file> <page> / <pages>" in the window's winbar
@@ -47,6 +48,7 @@ local M = {}
 ---@type PdfView.Config
 local defaults = {
   auto_open = true,
+  mouse_wheel = true,
   live_reload = true,
   reload_delay = 200,
   winbar = true,
@@ -140,7 +142,15 @@ local function validate(opts)
       error(("pdf-view: unknown option `%s`"):format(key), 3)
     end
   end
-  for _, key in ipairs({ "auto_open", "live_reload", "winbar", "hide_cursor", "tmux_passthrough", "force" }) do
+  for _, key in ipairs({
+    "auto_open",
+    "mouse_wheel",
+    "live_reload",
+    "winbar",
+    "hide_cursor",
+    "tmux_passthrough",
+    "force",
+  }) do
     if opts[key] ~= nil and type(opts[key]) ~= "boolean" then
       fail(key, "a boolean", opts[key])
     end

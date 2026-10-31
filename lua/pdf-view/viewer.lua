@@ -170,6 +170,7 @@ function M.attach(buf)
   })
 
   set_keymaps(s)
+  require("pdf-view.mouse").setup()
   set_global_autocmds()
   if config.options.live_reload then
     s.watcher = watch.start(s.path, config.options.reload_delay, function()
